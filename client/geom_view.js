@@ -585,10 +585,10 @@ GeomView.prototype.selectObject  = function (object) {
 
         var hasRotation = true;
 
-        var bbox = GEOMTOOL.boundingBox(object);
+        var bbox = GeomTools.boundingBox(object);
 
         var vertices = me.selectionBox.geometry.vertices;
-        GEOMTOOL.setVertices( bbox,vertices);
+        GeomTools.setVertices( bbox,vertices);
 
         me.selectionBox.geometry.computeBoundingSphere();
         me.selectionBox.geometry.verticesNeedUpdate = true;
@@ -751,7 +751,7 @@ GeomView.prototype.pointCameraTo = function(node) {
       COG = node;
     } else {
         // Refocus camera to the center of the new object
-        COG = GEOMTOOL.shapeCenterOfGravity(node);
+        COG = GeomTools.shapeCenterOfGravity(node);
     }
     var v = new THREE.Vector3();
     v.subVectors(COG,me.controls.target);
@@ -797,7 +797,7 @@ GeomView.prototype.getObjectBox = function (node) {
     if (!node) {
         node = me.__solidObjectsNode();
     }
-    var bbox = GEOMTOOL.boundingBox(node);
+    var bbox = GeomTools.boundingBox(node);
     return bbox;
 };
 
