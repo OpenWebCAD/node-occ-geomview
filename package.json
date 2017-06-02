@@ -1,0 +1,19 @@
+{
+  "name": "node-occ-geomview",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openwebcad/node-occ-geomview.git"
+  },
+  "author": "Etienne Rossignon",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/openwebcad/node-occ-geomview/issues"
+  },
+  "homepage": "https://github.com/openwebcad/node-occ-geomview#readme"
+}

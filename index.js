@@ -1,0 +1,1 @@
+exports.GeomView = require("./client/geom_view").GeomView;
