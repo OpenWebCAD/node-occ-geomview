@@ -4,7 +4,7 @@
 // Author: etienne.rossignon@gadz.org
 // released under MIT license 
 
-let assert = assert || function (condition, message) {
+let assert = global.assert || function (condition, message) {
       if (!condition) {
           throw new Error(message);
       }
