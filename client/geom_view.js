@@ -3,6 +3,7 @@
 
 // Author: etienne.rossignon@gadz.org
 // released under MIT license 
+let THREE = global.THREE;
 
 let assert = global.assert || function (condition, message) {
       if (!condition) {
@@ -19,7 +20,6 @@ const GeomTools = {
             const geometry = obj.geometry;
             geometry.computeBoundingBox();
             return geometry.boundingBox;
-
         }
 
         if (obj instanceof THREE.Object3D) {
@@ -645,6 +645,7 @@ GeomView.prototype.getSolidByName = function (objName) {
     const rootNode = me.__solidObjectsNode();
     return rootNode.getObjectByName(objName);
 };
+
 /*
  *  json = { solids: [ id: "ID" , { faces: [], edges: [] }, ...]}
  *
@@ -653,89 +654,116 @@ GeomView.prototype.getSolidByName = function (objName) {
 GeomView.prototype.updateShapeObject = function (json) {
 
     const me = this;
-
-    /**
-     *  Convert a rgb color to hex,
-     *  each Red Green Blue component of RGB shall be in the range [0,1]
-     *
-     */
-    function rgb2hex(rgb) {
-        /* jshint ignore bitwise */
-        return ( rgb[0] * 255 << 16 ) + ( rgb[1] * 255 << 8 ) + rgb[2] * 255;
-    }
-
-    function process_face_mesh(rootNode, jsonEntry, color) {
-
-        const jsonFace = jsonEntry.mesh;
-
-        jsonFace.scale = 1.0;
-        const jsonLoader = new THREE.JSONLoader();
-
-        const model = jsonLoader.parse(jsonFace, /* texturePath */ undefined);
-
-        const material = new THREE.MeshLambertMaterial({color: rgb2hex(color)});
-        const mesh = new THREE.Mesh(model.geometry, material);
-        mesh.properties = mesh.properties || {};
-        mesh.properties.OCCType = "face";
-        mesh.properties.OCCName = jsonFace.name;
-        rootNode.add(mesh);
-    }
-
-    function process_edge_mesh(rootNode, jsonEdge) {
-        const v = jsonEdge.mesh;
-        const geometry = new THREE.Geometry();
-        let i = 0;
-        while (i < v.length) {
-            geometry.vertices.push(new THREE.Vector3(v[i], v[i + 1], v[i + 2]));
-            i += 3;
-        }
-        const material = new THREE.LineDashedMaterial({linewidth: 4, color: 0xffffff});
-        const polyline = new THREE.Line(geometry, material);
-        polyline.properties = polyline.properties || {};
-        polyline.properties.OCCType = "edge";
-        polyline.properties.OCCName = jsonEdge.name;
-        rootNode.add(polyline);
-    }
-
-
     const rootNode = me.__solidObjectsNode();
+    me.updateGeomObject(rootNode,json);
+};
 
+
+/**
+ *  Convert a rgb color to hex,
+ *  each Red Green Blue component of RGB shall be in the range [0,1]
+ *
+ */
+function rgb2hex(rgb) {
+    /* jshint ignore bitwise */
+    return ( rgb[0] * 255 << 16 ) + ( rgb[1] * 255 << 8 ) + rgb[2] * 255;
+}
+
+function process_face_mesh(rootNode, jsonEntry, color) {
+
+    const jsonFace = jsonEntry.mesh;
+
+    jsonFace.scale = 1.0;
+    const jsonLoader = new THREE.JSONLoader();
+
+    const model = jsonLoader.parse(jsonFace, /* texturePath */ undefined);
+
+    const material = new THREE.MeshLambertMaterial({color: rgb2hex(color)});
+    const mesh = new THREE.Mesh(model.geometry, material);
+    mesh.properties = mesh.properties || {};
+    mesh.properties.OCCType = "face";
+    mesh.properties.OCCName = jsonFace.name;
+    rootNode.add(mesh);
+}
+
+function process_edge_mesh(rootNode, jsonEdge) {
+    const v = jsonEdge.mesh;
+    const geometry = new THREE.Geometry();
+    let i = 0;
+    while (i < v.length) {
+        geometry.vertices.push(new THREE.Vector3(v[i], v[i + 1], v[i + 2]));
+        i += 3;
+    }
+    const material = new THREE.LineDashedMaterial({linewidth: 4, color: 0xffffff});
+    const polyline = new THREE.Line(geometry, material);
+    polyline.properties = polyline.properties || {};
+    polyline.properties.OCCType = "edge";
+    polyline.properties.OCCName = jsonEdge.name;
+    rootNode.add(polyline);
+}
+
+/**
+ *
+ * @param node
+ * @param solidMesh
+ * @param solidMesh.name
+ * @param solidMesh.id
+ * @param solidMesh.faces [Array]
+ * @param solidMesh.edges [Array]
+ */
+GeomView.prototype.updateNodeSolidMesh = function(node,solidMesh) {
+
+    const color = [Math.random(), Math.random(), Math.random()];
+
+    const group = new THREE.Object3D();
+    node.add(group);
+    group.name = solidMesh.name;
+    group.properties = group.properties || {};
+    group.properties.OCCType = "Solid";
+    group.properties.OCCName = solidMesh.name;
+    group.properties.OCCID = solidMesh.id;
+    group.properties.OCCColor = color.slice(0);
+
+    // one object
+    solidMesh.faces.forEach(function (face) {
+        // one face
+        process_face_mesh(group, face, color);
+    });
+    solidMesh.edges.forEach(function (edge) {
+        // one face
+        process_edge_mesh(group, edge);
+    });
+
+};
+function getFreshChildObject(rootNode,name) {
+    const oldObj = rootNode.getObjectByName(name);
+    if (oldObj) {
+        rootNode.remove(oldObj);
+    }
+    const node = new THREE.Object3D();
+    node.name = name;
+    rootNode.add(node);
+    return node;
+}
+GeomView.prototype.getFreshChildObject = getFreshChildObject;
+/**
+ * @param json        {Object}
+ * @param json.name   {String}
+ * @param json.solids {Object};
+ */
+GeomView.prototype.updateGeomObject = function(rootNode,json) {
+
+    const self = this;
     let node = rootNode;
     if (json.name) {
-        const oldObj = rootNode.getObjectByName(json.name);
-        if (oldObj) {
-            rootNode.remove(oldObj);
-        }
-        node = new THREE.Object3D();
-        node.name = json.name;
-        rootNode.add(node);
+       node = getFreshChildObject(rootNode,json.name);
     }
 
     // read solids
     const jsonSolids = json.solids;
 
     jsonSolids.forEach(function (solidMesh) {
-
-        const color = [Math.random(), Math.random(), Math.random()];
-
-        const group = new THREE.Object3D();
-        node.add(group);
-        group.name = solidMesh.name;
-        group.properties = group.properties || {};
-        group.properties.OCCType = "Solid";
-        group.properties.OCCName = solidMesh.name;
-        group.properties.OCCID = solidMesh.id;
-        group.properties.OCCColor = color.slice(0);
-
-        // one object
-        solidMesh.faces.forEach(function (face) {
-            // one face
-            process_face_mesh(group, face, color);
-        });
-        solidMesh.edges.forEach(function (edge) {
-            // one face
-            process_edge_mesh(group, edge);
-        });
+        self.updateNodeSolidMesh(node,solidMesh);
     });
 };
 
