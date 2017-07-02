@@ -2,14 +2,14 @@
 // GeomView.js
 
 // Author: etienne.rossignon@gadz.org
-// released under MIT license 
+// released under MIT license
 let THREE = global.THREE;
 
 let assert = global.assert || function (condition, message) {
-      if (!condition) {
-          throw new Error(message);
-      }
-  };
+    if (!condition) {
+        throw new Error(message);
+    }
+};
 
 const GeomTools = {
 
@@ -340,8 +340,8 @@ function GeomView(container, width, height) {
     me.resizeRenderer = function () {
         const me = this;
 
-        const width = me.container.offsetParent.offsetWidth;
-        const height = me.container.offsetParent.offsetHeight;
+        const width =  me.container.offsetParent  ? me.container.offsetParent.offsetWidth : me.container.offsetWidth;
+        const height = me.container.offsetParent  ? me.container.offsetParent.offsetHeight:  me.container.offsetHeight;
 
         //xx const width = me.container.offsetWidth + me.container.offsetLeft;
         //xx const height = me.container.offsetHeight  + me.container.offsetTop;
@@ -756,7 +756,7 @@ GeomView.prototype.updateGeomObject = function(rootNode,json) {
     const self = this;
     let node = rootNode;
     if (json.name) {
-       node = getFreshChildObject(rootNode,json.name);
+        node = getFreshChildObject(rootNode,json.name);
     }
 
     // read solids
@@ -920,3 +920,11 @@ GeomView.prototype.onChangeView = function (viewName) {
 
 exports.GeomView = GeomView;
 exports.GeomTools = GeomTools;
+
+
+
+//////////////////
+// WEBPACK FOOTER
+// ./node_modules/node-occ-geomview/client/geom_view.js
+// module id = 219
+// module chunks = 0 1
